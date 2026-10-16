@@ -32,7 +32,7 @@ jobs:
           GMAIL_CK_JSON: ${{ secrets.GMAIL_CK_JSON }}
         run: |
           set -o pipefail
-          python scripts/e2b_reg.py --email "${{ inputs.email }}" ${{ inputs.password && format('--password "{0}"', inputs.password) || '' }} 2>&1 | tee log.txt
+          python -u scripts/e2b_reg.py --email "${{ inputs.email }}" ${{ inputs.password && format('--password "{0}"', inputs.password) || '' }} 2>&1 | python -u scripts/sanitize.py | tee log.txt
 
       - name: Upload register log
         if: always()
