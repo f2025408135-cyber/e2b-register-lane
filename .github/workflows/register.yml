@@ -1,0 +1,47 @@
+name: register
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: "Account email to register"
+        required: true
+        type: string
+      password:
+        description: "Password (optional; auto-generated if empty)"
+        required: false
+        type: string
+
+jobs:
+  register:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install curl_cffi
+        run: pip install curl_cffi
+
+      - name: Run register flow
+        env:
+          GMAIL_CK_JSON: ${{ secrets.GMAIL_CK_JSON }}
+        run: |
+          set -o pipefail
+          python scripts/e2b_reg.py --email "${{ inputs.email }}" ${{ inputs.password && format('--password "{0}"', inputs.password) || '' }} 2>&1 | tee log.txt
+
+      - name: Upload register log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: register-log
+          path: log.txt
+          if-no-files-found: ignore
+
+      - name: Append log tail to step summary
+        if: always()
+        run: tail -n 40 log.txt >> $GITHUB_STEP_SUMMARY
